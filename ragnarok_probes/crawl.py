@@ -7,13 +7,6 @@ class MySpider(scrapy.Spider):
 
     """ Webscraper for NVD by NIST, it is used for research purposes only! """
 
-    name = 'spider_nist'
-    allowed_domains = ['nvd.nist.gov']
-    start_urls = ['https://nvd.nist.gov/vuln/full-listing']
-    user_agent = 'Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36'
-    base_url = 'https://nvd.nist.gov'
-
-
     def parse(self, response):
 
         """ Parses specified return value from the scanned page """
@@ -68,14 +61,3 @@ class MySpider(scrapy.Spider):
         item['exploitability_score'] = exploitability_score
 
         yield item
-
-
-
-
-#add settings
-process = CrawlerProcess(settings={
-    "DOWNLOAD_DELAY": 1.5,
-    "CONCURRENT_REQUESTS_PER_DOMAIN": 8,
-    "FEED_FORMAT" : 'json',
-    "FEED_URI" : 'cve_db.json',
-})
