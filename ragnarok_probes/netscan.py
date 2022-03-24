@@ -14,17 +14,14 @@ class Netscan:
         for i in range(0,len(answered_list)):
             client_dict = {"ip" : answered_list[i][1].psrc, "mac" : answered_list[i][1].hwsrc, "vendor" : mac_vendor(answered_list[i][1].hwsrc)}
             result.append(client_dict)
-        print("test1")
         return result
 
     def mac_vendor(mac):
         url = "https://api.macvendors.com/"
         response = requests.get(url+mac)
-        print("test2")
         return response.content.decode()
 
     def display_result(self, result):
-        print("test3")
         print("-----------------------------------\nIP Address\tMAC Address\n-----------------------------------")
         for i in result:
             print("{}\t{},{}".format(i["ip"], i["mac"], i["vendor"]))

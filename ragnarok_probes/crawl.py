@@ -4,6 +4,9 @@ from scrapy.crawler import CrawlerProcess
 from cve import CveItem
 
 class MySpider(scrapy.Spider):
+
+    """ Webscraper for NVD by NIST, it is used for research purposes only! """
+
     name = 'spider_nist'
     allowed_domains = ['nvd.nist.gov']
     start_urls = ['https://nvd.nist.gov/vuln/full-listing']
@@ -12,6 +15,9 @@ class MySpider(scrapy.Spider):
 
 
     def parse(self, response):
+
+        """ Parses specified return value from the scanned page """
+
         months = response.xpath("//ul[@class='list-inline']/li/a/@href").extract()
 
         for month in months:
@@ -20,6 +26,9 @@ class MySpider(scrapy.Spider):
 
 
     def parse_single_cve_page(self, response):
+
+        """ Parses a specified single page for faster workflow """
+
         all_cve = response.xpath("//span[@class='col-md-2']/a/@href").extract()
         for cve in all_cve:
             url = self.base_url+cve
@@ -27,16 +36,21 @@ class MySpider(scrapy.Spider):
 
 
     def parse_cve_info(self, response):
+
+        """ BeautifulSoup manipulates the input_value variable via html tags.
+            Retrieves is all placed in the value field of the input tag.
+            Extrapolates the info into value (html nodes) and assigns it to a variable """
+
         cve_id = response.xpath("//i[@class='fa fa-bug fa-flip-vertical']/following-sibling::span/text()").extract_first()
         description = response.xpath("//p[@data-testid='vuln-description']/text()").get()
         nvd_published_date = response.xpath("//span[@data-testid='vuln-published-on']/text()").get()
         nvd_last_modified = response.xpath("//span[@data-testid='vuln-last-modified-on']/text()").get()
 
-        #extract info in to hidden menu
-        hidden_menu_unparsed = response.xpath("//input[@id='nistV3MetricHidden']").extract() #[1]
+        #extract info into the hidden menu
+        hidden_menu_unparsed = response.xpath("//input[@id='nistV3MetricHidden']").extract()
         hidden_menu = html.unescape(hidden_menu_unparsed)
 
-        soup = BeautifulSoup(hidden_menu[0], 'html.parser')  #[2]
+        soup = BeautifulSoup(hidden_menu[0], 'html.parser')
         input_value = soup.find('input').get('value')
 
         soup = BeautifulSoup(input_value, 'html.parser')
@@ -45,7 +59,6 @@ class MySpider(scrapy.Spider):
         exploitability_score = soup.find('span',{'data-testid' : 'vuln-cvssv3-exploitability-score'}).text
 
         item = CveItem()
-        #info
 
         item['cve_id'] = cve_id
         item['description'] = description
@@ -66,19 +79,3 @@ process = CrawlerProcess(settings={
     "FEED_FORMAT" : 'json',
     "FEED_URI" : 'cve_db.json',
 })
-
-process.crawl(MySpider)
-process.start()
-
-
-
-#- -[1] The retrieved information contains special characters. The html.unescape() function
-#       convert all named and numeric character references (e.g. &gt;, &#62;, &#x3e;) in the string s
-#       to the corresponding Unicode characters
-#
-#
-#- -[2] I use beautifulSoup to be able to manipulate the input_value variable via html tags.
-#       The information I need to retrieve is all placed in the value field of the input tag.
-#       I extrapolate the info into value (html nodes), assign it to a variable and manipulate it
-#       with beautifulsoup.
-#
